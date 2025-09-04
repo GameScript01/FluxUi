@@ -10,7 +10,6 @@ function Library:CreateWindow(title)
     ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 600, 0, 400)
     MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
     MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
@@ -34,6 +33,130 @@ function Library:CreateWindow(title)
     UIListLayout.Padding = UDim.new(0, 5)
 
     local Window = { Tabs = {} }
+
+    function Window:CreateTab(name)
+        local Tab = {}
+
+        local TabFrame = Instance.new("ScrollingFrame")
+        TabFrame.Name = name
+        TabFrame.Size = UDim2.new(1, 0, 1, 0)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.ScrollBarThickness = 4
+        TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabFrame.Visible = (#Window.Tabs == 0)
+        TabFrame.Parent = TabContainer
+
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(1, 0, 0, 45)
+        Btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Btn.Text = name
+        Btn.Parent = TabButtons
+
+        Btn.MouseButton1Click:Connect(function()
+            for _, t in ipairs(Window.Tabs) do
+                t.Frame.Visible = false
+            end
+            TabFrame.Visible = true
+        end)
+
+        local UIListLayout2 = Instance.new("UIListLayout")
+        UIListLayout2.Parent = TabFrame
+        UIListLayout2.Padding = UDim.new(0, 10)
+
+        UIListLayout2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout2.AbsoluteContentSize.Y + 20)
+        end)
+
+        function Tab:CreateSection(title)
+            local Section = {}
+
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Size = UDim2.new(1, -20, 0, 50)
+            SectionFrame.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+            SectionFrame.Position = UDim2.new(0, 10, 0, 0)
+            SectionFrame.Parent = TabFrame
+
+            local SectionLabel = Instance.new("TextLabel")
+            SectionLabel.Size = UDim2.new(1, 0, 0, 30)
+            SectionLabel.BackgroundTransparency = 1
+            SectionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+            SectionLabel.Text = title or "Section"
+            SectionLabel.Parent = SectionFrame
+
+            local ContentFrame = Instance.new("Frame")
+            ContentFrame.Size = UDim2.new(1, -20, 0, 0)
+            ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+            ContentFrame.BackgroundTransparency = 1
+            ContentFrame.Parent = SectionFrame
+
+            local UIListLayout3 = Instance.new("UIListLayout")
+            UIListLayout3.Parent = ContentFrame
+            UIListLayout3.Padding = UDim.new(0, 8)
+
+            UIListLayout3:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                ContentFrame.Size = UDim2.new(1, -20, 0, UIListLayout3.AbsoluteContentSize.Y)
+                SectionFrame.Size = UDim2.new(1, -20, 0, ContentFrame.Size.Y + 45)
+            end)
+
+            function Section:CreateButton(callback)
+                local Btn2 = Instance.new("TextButton")
+                Btn2.Size = UDim2.new(1, 0, 0, 50)
+                Btn2.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+                Btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Btn2.Text = "TextButton"
+                Btn2.Parent = ContentFrame
+                Btn2.MouseButton1Click:Connect(function()
+                    if callback then callback() end
+                end)
+            end
+
+            function Section:CreateTextBox(placeholder, callback)
+                local Box = Instance.new("TextBox")
+                Box.Size = UDim2.new(1, 0, 0, 50)
+                Box.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
+                Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Box.PlaceholderText = placeholder or "Enter text..."
+                Box.ClearTextOnFocus = false
+                Box.Parent = ContentFrame
+                Box.FocusLost:Connect(function(enterPressed)
+                    if enterPressed and callback then
+                        callback(Box.Text)
+                    end
+                end)
+            end
+
+            function Section:CreateLabel(text)
+                local Label = Instance.new("TextLabel")
+                Label.Size = UDim2.new(1, 0, 0, 30)
+                Label.BackgroundTransparency = 1
+                Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Label.Text = text or "Label"
+                Label.Parent = ContentFrame
+                return Label
+            end
+
+            function Section:CreateFrame()
+                local Frame = Instance.new("Frame")
+                Frame.Size = UDim2.new(1, 0, 0, 100)
+                Frame.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                Frame.Parent = ContentFrame
+                return Frame
+            end
+
+            return Section
+        end
+
+        Tab.Frame = TabFrame
+        table.insert(Window.Tabs, Tab)
+        return Tab
+    end
+
+    return Window
+end
+
+return Library
 
     function Window:CreateTab(name)
         local Tab = {}
