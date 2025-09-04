@@ -1,0 +1,126 @@
+local Library = {}
+
+function Library:CreateWindow(title)
+    local Player = game:GetService("Players").LocalPlayer
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = title or "Window"
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 600, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    MainFrame.Parent = ScreenGui
+
+    local TabButtons = Instance.new("Frame")
+    TabButtons.Name = "TabButtons"
+    TabButtons.Size = UDim2.new(0, 140, 1, 0)
+    TabButtons.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TabButtons.Parent = MainFrame
+
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(1, -140, 1, 0)
+    TabContainer.Position = UDim2.new(0, 140, 0, 0)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    TabContainer.Parent = MainFrame
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = TabButtons
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    local Window = { Tabs = {} }
+
+    function Window:CreateTab(name)
+        local Tab = {}
+        local TabFrame = Instance.new("ScrollingFrame")
+        TabFrame.Name = name
+        TabFrame.Size = UDim2.new(1, 0, 1, 0)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.ScrollBarThickness = 4
+        TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabFrame.Visible = (#Window.Tabs == 0)
+        TabFrame.Parent = TabContainer
+
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(1, 0, 0, 45)
+        Btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Btn.Text = name
+        Btn.Parent = TabButtons
+
+        Btn.MouseButton1Click:Connect(function()
+            for _, t in ipairs(Window.Tabs) do
+                t.Frame.Visible = false
+            end
+            TabFrame.Visible = true
+        end)
+
+        local UIListLayout2 = Instance.new("UIListLayout")
+        UIListLayout2.Parent = TabFrame
+        UIListLayout2.Padding = UDim.new(0, 10)
+
+        UIListLayout2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout2.AbsoluteContentSize.Y + 20)
+        end)
+
+        function Tab:CreateSection(title)
+            local Section = {}
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Size = UDim2.new(1, -20, 0, 50)
+            SectionFrame.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+            SectionFrame.Position = UDim2.new(0, 10, 0, 0)
+            SectionFrame.Parent = TabFrame
+
+            local SectionLabel = Instance.new("TextLabel")
+            SectionLabel.Size = UDim2.new(1, 0, 0, 30)
+            SectionLabel.BackgroundTransparency = 1
+            SectionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
+            SectionLabel.Text = title or "Section"
+            SectionLabel.Parent = SectionFrame
+
+            local ContentFrame = Instance.new("Frame")
+            ContentFrame.Size = UDim2.new(1, -20, 0, 0)
+            ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+            ContentFrame.BackgroundTransparency = 1
+            ContentFrame.Parent = SectionFrame
+
+            local UIListLayout3 = Instance.new("UIListLayout")
+            UIListLayout3.Parent = ContentFrame
+            UIListLayout3.Padding = UDim.new(0, 8)
+
+            UIListLayout3:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                ContentFrame.Size = UDim2.new(1, -20, 0, UIListLayout3.AbsoluteContentSize.Y)
+                SectionFrame.Size = UDim2.new(1, -20, 0, ContentFrame.Size.Y + 45)
+            end)
+
+            function Section:CreateButton(callback)
+                local Btn2 = Instance.new("TextButton")
+                Btn2.Size = UDim2.new(1, 0, 0, 50)
+                Btn2.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+                Btn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Btn2.Text = "TextButton"
+                Btn2.Parent = ContentFrame
+
+                Btn2.MouseButton1Click:Connect(function()
+                    if callback then callback() end
+                end)
+            end
+
+            return Section
+        end
+
+        Tab.Frame = TabFrame
+        table.insert(Window.Tabs, Tab)
+        return Tab
+    end
+
+    return Window
+end
+
+return Library
