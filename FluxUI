@@ -3,169 +3,366 @@ FluxUI.__index = FluxUI
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+
+local function createStroke(parent, thickness, transparency, color)
+    local s = Instance.new("UIStroke")
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Thickness = thickness or 1
+    s.Transparency = transparency or 0
+    s.Color = color or Color3.fromRGB(0,0,0)
+    s.Parent = parent
+    return s
+end
+
+local function makeDraggable(frame, dragHandle)
+    local dragging = false
+    local dragStart
+    local startPos
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
 
 function FluxUI:Window(title, subtitle, themeColor, toggleKey)
     local Window = {}
     Window.__index = Window
     Window.Tabs = {}
+    Window.CurrentTab = nil
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FluxUI"
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+    local camera = workspace.CurrentCamera
+    local vp = camera and camera.ViewportSize or Vector2.new(1280,720)
+    local isMobile = UserInputService.TouchEnabled
+    local baseW = 640
+    local baseH = 400
+    local targetW = isMobile and math.floor(math.clamp(vp.X*0.8, 460, 680)) or baseW
+    local targetH = isMobile and math.floor(math.clamp(vp.Y*0.6, 320, 480)) or baseH
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Parent = ScreenGui
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    MainFrame.Size = UDim2.new(0, 500, 0, 300)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-
-    local UICorner = Instance.new("UICorner", MainFrame)
-    UICorner.CornerRadius = UDim.new(0, 6)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(22,22,24)
+    MainFrame.Size = UDim2.new(0, targetW, 0, targetH)
+    MainFrame.Position = UDim2.new(0.5, -targetW//2, 0.5, -targetH//2)
+    local mainCorner = Instance.new("UICorner", MainFrame)
+    mainCorner.CornerRadius = UDim.new(0,10)
+    createStroke(MainFrame, 1, 0.2, Color3.fromRGB(255,255,255))
 
     local Topbar = Instance.new("Frame")
     Topbar.Name = "Topbar"
     Topbar.Parent = MainFrame
-    Topbar.Size = UDim2.new(1, 0, 0, 40)
-    Topbar.BackgroundColor3 = themeColor or Color3.fromRGB(255, 110, 48)
+    Topbar.Size = UDim2.new(1, 0, 0, 44)
+    Topbar.BackgroundColor3 = themeColor or Color3.fromRGB(255,110,48)
+    local topCorner = Instance.new("UICorner", Topbar)
+    topCorner.CornerRadius = UDim.new(0,10)
+    local g = Instance.new("UIGradient", Topbar)
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, (themeColor or Color3.fromRGB(255,110,48))),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,140,80))
+    })
 
     local Title = Instance.new("TextLabel")
     Title.Parent = Topbar
     Title.BackgroundTransparency = 1
-    Title.Size = UDim2.new(1, -10, 1, 0)
-    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.Size = UDim2.new(1, -16, 1, 0)
+    Title.Position = UDim2.new(0, 12, 0, 0)
     Title.Font = Enum.Font.GothamBold
-    Title.Text = title .. " - " .. (subtitle or "")
+    Title.Text = (title or "Flux Hub").." - "..(subtitle or "v1.0")
     Title.TextColor3 = Color3.new(1,1,1)
-    Title.TextSize = 14
+    Title.TextSize = 16
     Title.TextXAlignment = Enum.TextXAlignment.Left
 
-    local TabHolder = Instance.new("Frame")
-    TabHolder.Parent = MainFrame
-    TabHolder.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    TabHolder.Size = UDim2.new(0,120,1,-40)
-    TabHolder.Position = UDim2.new(0,0,0,40)
+    local Body = Instance.new("Frame")
+    Body.Parent = MainFrame
+    Body.BackgroundColor3 = Color3.fromRGB(28,28,30)
+    Body.Size = UDim2.new(1, -2, 1, -48)
+    Body.Position = UDim2.new(0, 1, 0, 46)
+    local bodyCorner = Instance.new("UICorner", Body)
+    bodyCorner.CornerRadius = UDim.new(0,10)
+    createStroke(Body, 1, 0.7, Color3.fromRGB(255,255,255))
 
-    local UIListLayout = Instance.new("UIListLayout", TabHolder)
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local TabHolder = Instance.new("Frame")
+    TabHolder.Parent = Body
+    TabHolder.BackgroundColor3 = Color3.fromRGB(24,24,26)
+    TabHolder.Size = UDim2.new(0, 140, 1, -2)
+    TabHolder.Position = UDim2.new(0, 1, 0, 1)
+    local thCorner = Instance.new("UICorner", TabHolder)
+    thCorner.CornerRadius = UDim.new(0,8)
+    createStroke(TabHolder, 1, 0.85, Color3.fromRGB(255,255,255))
+
+    local TabsList = Instance.new("ScrollingFrame")
+    TabsList.Parent = TabHolder
+    TabsList.Size = UDim2.new(1, 0, 1, 0)
+    TabsList.BackgroundTransparency = 1
+    TabsList.ScrollBarThickness = 4
+    TabsList.CanvasSize = UDim2.new(0,0,0,0)
+    local tlLayout = Instance.new("UIListLayout", TabsList)
+    tlLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tlLayout.Padding = UDim.new(0,6)
+    local tlPadding = Instance.new("UIPadding", TabsList)
+    tlPadding.PaddingTop = UDim.new(0,8)
+    tlPadding.PaddingLeft = UDim.new(0,8)
+    tlLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabsList.CanvasSize = UDim2.new(0,0,0, tlLayout.AbsoluteContentSize.Y + 12)
+    end)
 
     local PageHolder = Instance.new("Frame")
-    PageHolder.Parent = MainFrame
-    PageHolder.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    PageHolder.Size = UDim2.new(1,-120,1,-40)
-    PageHolder.Position = UDim2.new(0,120,0,40)
+    PageHolder.Parent = Body
+    PageHolder.BackgroundColor3 = Color3.fromRGB(18,18,20)
+    PageHolder.Size = UDim2.new(1, -146, 1, -2)
+    PageHolder.Position = UDim2.new(0, 145, 0, 1)
+    local phCorner = Instance.new("UICorner", PageHolder)
+    phCorner.CornerRadius = UDim.new(0,8)
+    createStroke(PageHolder, 1, 0.85, Color3.fromRGB(255,255,255))
+
+    local function refreshLayoutForResize()
+        PageHolder.Size = UDim2.new(1, -146, 1, -2)
+    end
+
+    makeDraggable(MainFrame, Topbar)
+
+    local ResizeHandle = Instance.new("Frame")
+    ResizeHandle.Parent = MainFrame
+    ResizeHandle.AnchorPoint = Vector2.new(1,1)
+    ResizeHandle.Position = UDim2.new(1, -6, 1, -6)
+    ResizeHandle.Size = UDim2.new(0, 16, 0, 16)
+    ResizeHandle.BackgroundColor3 = Color3.fromRGB(90,90,95)
+    local rhCorner = Instance.new("UICorner", ResizeHandle)
+    rhCorner.CornerRadius = UDim.new(1,0)
+
+    local resizing = false
+    local startSize
+    local startPos
+    local startInputPos
+    ResizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            startSize = MainFrame.Size
+            startPos = MainFrame.Position
+            startInputPos = input.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - startInputPos
+            local newW = math.max(460, startSize.X.Offset + delta.X)
+            local newH = math.max(300, startSize.Y.Offset + delta.Y)
+            MainFrame.Size = UDim2.new(0, newW, 0, newH)
+            ResizeHandle.Position = UDim2.new(1, -6, 1, -6)
+            refreshLayoutForResize()
+        end
+    end)
+
+    if isMobile then
+        local ToggleBtnGui = Instance.new("ScreenGui")
+        ToggleBtnGui.Name = "FluxUIToggle"
+        ToggleBtnGui.ResetOnSpawn = false
+        ToggleBtnGui.IgnoreGuiInset = true
+        ToggleBtnGui.Parent = ScreenGui
+
+        local ToggleBtn = Instance.new("TextButton")
+        ToggleBtn.Parent = ToggleBtnGui
+        ToggleBtn.Text = "≡"
+        ToggleBtn.Font = Enum.Font.GothamBold
+        ToggleBtn.TextScaled = true
+        ToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(35,35,40)
+        ToggleBtn.Size = UDim2.new(0,48,0,48)
+        ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
+        local tbc = Instance.new("UICorner", ToggleBtn)
+        tbc.CornerRadius = UDim.new(1,0)
+        createStroke(ToggleBtn, 1, 0.6, Color3.fromRGB(255,255,255))
+        ToggleBtn.MouseButton1Click:Connect(function()
+            MainFrame.Visible = not MainFrame.Visible
+        end)
+    end
+
+    if toggleKey then
+        UserInputService.InputBegan:Connect(function(input, gp)
+            if not gp and input.KeyCode == toggleKey then
+                MainFrame.Visible = not MainFrame.Visible
+            end
+        end)
+    end
 
     function Window:Tab(name, icon)
         local Tab = {}
         Tab.__index = Tab
-        Tab.Buttons = {}
 
-        local TabButton = Instance.new("TextButton")
-        TabButton.Parent = TabHolder
-        TabButton.Text = name
-        TabButton.Size = UDim2.new(1,0,0,30)
-        TabButton.BackgroundColor3 = Color3.fromRGB(35,35,35)
-        TabButton.TextColor3 = Color3.fromRGB(255,255,255)
-        TabButton.Font = Enum.Font.Gotham
-        TabButton.TextSize = 12
+        local TabButton = Instance.new("Frame")
+        TabButton.Parent = TabsList
+        TabButton.BackgroundColor3 = Color3.fromRGB(36,36,40)
+        TabButton.Size = UDim2.new(1, -8, 0, 34)
+        local tbc = Instance.new("UICorner", TabButton)
+        tbc.CornerRadius = UDim.new(0,6)
+        createStroke(TabButton, 1, 0.85, Color3.fromRGB(255,255,255))
 
+        local hb = Instance.new("UIListLayout", TabButton)
+        hb.FillDirection = Enum.FillDirection.Horizontal
+        hb.VerticalAlignment = Enum.VerticalAlignment.Center
+        hb.Padding = UDim.new(0,8)
+
+        local pad = Instance.new("UIPadding", TabButton)
+        pad.PaddingLeft = UDim.new(0,10)
+        pad.PaddingRight = UDim.new(0,10)
+
+        local iconImg
         if typeof(icon) == "string" and icon ~= "" then
-            local IconImg = Instance.new("ImageLabel")
-            IconImg.Parent = TabButton
-            IconImg.Size = UDim2.new(0,18,0,18)
-            IconImg.Position = UDim2.new(0,5,0.5,-9)
-            IconImg.BackgroundTransparency = 1
-            IconImg.Image = icon
-            TabButton.TextXAlignment = Enum.TextXAlignment.Left
-            TabButton.Text = "     " .. name
+            iconImg = Instance.new("ImageLabel")
+            iconImg.Parent = TabButton
+            iconImg.Size = UDim2.new(0,18,0,18)
+            iconImg.BackgroundTransparency = 1
+            iconImg.Image = icon
         end
+
+        local ClickBtn = Instance.new("TextButton")
+        ClickBtn.Parent = TabButton
+        ClickBtn.BackgroundTransparency = 1
+        ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+        ClickBtn.Text = name or "Tab"
+        ClickBtn.TextColor3 = Color3.fromRGB(230,230,235)
+        ClickBtn.Font = Enum.Font.Gotham
+        ClickBtn.TextSize = 14
+        ClickBtn.TextXAlignment = Enum.TextXAlignment.Left
 
         local Page = Instance.new("ScrollingFrame")
         Page.Parent = PageHolder
-        Page.Size = UDim2.new(1,0,1,0)
+        Page.Size = UDim2.new(1, -12, 1, -12)
+        Page.Position = UDim2.new(0, 6, 0, 6)
         Page.BackgroundTransparency = 1
         Page.Visible = false
         Page.ScrollBarThickness = 6
-        Page.ScrollBarImageColor3 = Color3.fromRGB(150,150,150)
+        Page.ScrollBarImageTransparency = 0
+        Page.ScrollBarImageColor3 = Color3.fromRGB(160,160,170)
 
         local UIList = Instance.new("UIListLayout", Page)
-        UIList.Padding = UDim.new(0,5)
+        UIList.Padding = UDim.new(0,8)
         UIList.SortOrder = Enum.SortOrder.LayoutOrder
+        local PagePad = Instance.new("UIPadding", Page)
+        PagePad.PaddingTop = UDim.new(0,8)
+        PagePad.PaddingLeft = UDim.new(0,8)
+        PagePad.PaddingRight = UDim.new(0,8)
+        PagePad.PaddingBottom = UDim.new(0,8)
 
         UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Page.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 10)
+            Page.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 16)
         end)
 
-        Tab.Page = Page
-
-        function Tab:Show()
-            for _, p in pairs(PageHolder:GetChildren()) do
+        local function activate()
+            for _, p in ipairs(PageHolder:GetChildren()) do
                 if p:IsA("ScrollingFrame") then
                     p.Visible = false
                 end
             end
+            for _, b in ipairs(TabsList:GetChildren()) do
+                if b:IsA("Frame") then
+                    b.BackgroundColor3 = Color3.fromRGB(36,36,40)
+                end
+            end
             Page.Visible = true
+            TabButton.BackgroundColor3 = Color3.fromRGB(48,48,54)
+            Window.CurrentTab = Tab
         end
 
-        TabButton.MouseButton1Click:Connect(function()
-            Tab:Show()
+        ClickBtn.MouseButton1Click:Connect(function()
+            activate()
         end)
+
+        if not Window.CurrentTab then
+            activate()
+        end
 
         function Tab:Button(text, callback)
             local Btn = Instance.new("TextButton")
             Btn.Parent = Page
-            Btn.Size = UDim2.new(1, 0, 0, 35)
-            Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            Btn.Text = text
+            Btn.Size = UDim2.new(1, 0, 0, 40)
+            Btn.BackgroundColor3 = Color3.fromRGB(42,42,46)
+            Btn.Text = text or "Button"
             Btn.TextColor3 = Color3.fromRGB(255,255,255)
             Btn.Font = Enum.Font.Gotham
-            Btn.TextSize = 12
-
+            Btn.TextSize = 14
+            local bc = Instance.new("UICorner", Btn)
+            bc.CornerRadius = UDim.new(0,8)
+            createStroke(Btn, 1, 0.8, Color3.fromRGB(255,255,255))
             Btn.MouseButton1Click:Connect(function()
-                pcall(callback)
+                if callback then
+                    pcall(callback)
+                end
             end)
+            return Btn
         end
 
         function Tab:Textbox(placeholder, clearOnFocus, callback)
+            local BoxHolder = Instance.new("Frame")
+            BoxHolder.Parent = Page
+            BoxHolder.Size = UDim2.new(1, 0, 0, 44)
+            BoxHolder.BackgroundColor3 = Color3.fromRGB(42,42,46)
+            local bhc = Instance.new("UICorner", BoxHolder)
+            bhc.CornerRadius = UDim.new(0,8)
+            createStroke(BoxHolder, 1, 0.8, Color3.fromRGB(255,255,255))
+
             local Box = Instance.new("TextBox")
-            Box.Parent = Page
-            Box.Size = UDim2.new(1, -20, 0, 40)
-            Box.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            Box.PlaceholderText = placeholder
+            Box.Parent = BoxHolder
+            Box.BackgroundTransparency = 1
+            Box.Size = UDim2.new(1, -16, 1, 0)
+            Box.Position = UDim2.new(0, 8, 0, 0)
+            Box.PlaceholderText = placeholder or "Enter text"
             Box.Text = ""
             Box.TextColor3 = Color3.fromRGB(255,255,255)
+            Box.PlaceholderColor3 = Color3.fromRGB(180,180,185)
             Box.Font = Enum.Font.Gotham
-            Box.TextSize = 12
+            Box.TextSize = 14
             Box.ClearTextOnFocus = clearOnFocus or false
+            Box.TextXAlignment = Enum.TextXAlignment.Left
 
             Box.FocusLost:Connect(function(enter)
                 if enter and callback then
                     pcall(callback, Box.Text)
                 end
             end)
+            return Box
         end
 
         return setmetatable(Tab, Tab)
     end
 
-    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-    if isMobile then
-        MainFrame.Size = UDim2.new(0, 350, 0, 220)
-        MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
-        local UIScale = Instance.new("UIScale")
-        UIScale.Scale = 0.9
-        UIScale.Parent = MainFrame
-    end
-
-    if toggleKey then
-        UserInputService.InputBegan:Connect(function(input,gp)
-            if not gp and input.KeyCode == toggleKey then
-                MainFrame.Visible = not MainFrame.Visible
-            end
-        end)
-    end
+    camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        local v = camera.ViewportSize
+        if isMobile then
+            local w = math.floor(math.clamp(v.X*0.8, 460, 720))
+            local h = math.floor(math.clamp(v.Y*0.6, 320, 520))
+            MainFrame.Size = UDim2.new(0, w, 0, h)
+            MainFrame.Position = UDim2.new(0.5, -w//2, 0.5, -h//2)
+            refreshLayoutForResize()
+        end
+    end)
 
     return setmetatable(Window, Window)
 end
