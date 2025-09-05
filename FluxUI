@@ -5,14 +5,13 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
-if LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("FluxUI") then
+if LocalPlayer.PlayerGui:FindFirstChild("FluxUI") then
     LocalPlayer.PlayerGui.FluxUI:Destroy()
 end
 
 local function makeDraggable(frame, dragHandle)
     local dragging = false
-    local dragStart
-    local startPos
+    local dragStart, startPos
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -41,26 +40,22 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "FluxUI"
+    ScreenGui.Parent = LocalPlayer.PlayerGui
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
     MainFrame.Parent = ScreenGui
-    MainFrame.BackgroundColor3 = Color3.fromRGB(22,22,24)
-    MainFrame.Size = UDim2.new(0, 600, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-    local mainCorner = Instance.new("UICorner", MainFrame)
-    mainCorner.CornerRadius = UDim.new(0,10)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    MainFrame.Size = UDim2.new(0, 550, 0, 380)
+    MainFrame.Position = UDim2.new(0.5, -275, 0.5, -190)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
     local Topbar = Instance.new("Frame")
-    Topbar.Name = "Topbar"
     Topbar.Parent = MainFrame
     Topbar.Size = UDim2.new(1, 0, 0, 44)
-    Topbar.BackgroundColor3 = themeColor or Color3.fromRGB(255,110,48)
-    local topCorner = Instance.new("UICorner", Topbar)
-    topCorner.CornerRadius = UDim.new(0,10)
+    Topbar.BackgroundColor3 = themeColor or Color3.fromRGB(255, 110, 48)
+    Instance.new("UICorner", Topbar).CornerRadius = UDim.new(0, 10)
 
     local Title = Instance.new("TextLabel")
     Title.Parent = Topbar
@@ -75,30 +70,28 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
 
     local Body = Instance.new("Frame")
     Body.Parent = MainFrame
-    Body.BackgroundColor3 = Color3.fromRGB(28,28,30)
+    Body.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     Body.Size = UDim2.new(1, -2, 1, -48)
     Body.Position = UDim2.new(0, 1, 0, 46)
-    local bodyCorner = Instance.new("UICorner", Body)
-    bodyCorner.CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", Body).CornerRadius = UDim.new(0, 10)
 
     local TabHolder = Instance.new("Frame")
     TabHolder.Parent = Body
-    TabHolder.BackgroundColor3 = Color3.fromRGB(24,24,26)
+    TabHolder.BackgroundColor3 = Color3.fromRGB(40,40,45)
     TabHolder.Size = UDim2.new(0, 140, 1, -2)
     TabHolder.Position = UDim2.new(0, 1, 0, 1)
-    local thCorner = Instance.new("UICorner", TabHolder)
-    thCorner.CornerRadius = UDim.new(0,8)
+    Instance.new("UICorner", TabHolder).CornerRadius = UDim.new(0, 8)
 
     local TabsList = Instance.new("UIListLayout", TabHolder)
     TabsList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabsList.Padding = UDim.new(0,6)
 
     local PageHolder = Instance.new("Frame")
     PageHolder.Parent = Body
-    PageHolder.BackgroundColor3 = Color3.fromRGB(18,18,20)
+    PageHolder.BackgroundColor3 = Color3.fromRGB(25,25,30)
     PageHolder.Size = UDim2.new(1, -146, 1, -2)
     PageHolder.Position = UDim2.new(0, 145, 0, 1)
-    local phCorner = Instance.new("UICorner", PageHolder)
-    phCorner.CornerRadius = UDim.new(0,8)
+    Instance.new("UICorner", PageHolder).CornerRadius = UDim.new(0, 8)
 
     makeDraggable(MainFrame, Topbar)
 
@@ -108,12 +101,10 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
     ResizeHandle.Position = UDim2.new(1, -6, 1, -6)
     ResizeHandle.Size = UDim2.new(0, 16, 0, 16)
     ResizeHandle.BackgroundColor3 = Color3.fromRGB(90,90,95)
-    local rhCorner = Instance.new("UICorner", ResizeHandle)
-    rhCorner.CornerRadius = UDim.new(1,0)
+    Instance.new("UICorner", ResizeHandle).CornerRadius = UDim.new(1,0)
 
     local resizing = false
-    local startSize
-    local startInputPos
+    local startSize, startInputPos
     ResizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
@@ -143,11 +134,10 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         ToggleBtn.Font = Enum.Font.GothamBold
         ToggleBtn.TextScaled = true
         ToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(35,35,40)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(45,45,55)
         ToggleBtn.Size = UDim2.new(0,48,0,48)
         ToggleBtn.Position = UDim2.new(1, -56, 0, 12)
-        local tbc = Instance.new("UICorner", ToggleBtn)
-        tbc.CornerRadius = UDim.new(1,0)
+        Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1,0)
         ToggleBtn.MouseButton1Click:Connect(function()
             MainFrame.Visible = not MainFrame.Visible
         end)
@@ -167,7 +157,7 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
 
         local TabButton = Instance.new("TextButton")
         TabButton.Parent = TabHolder
-        TabButton.BackgroundColor3 = Color3.fromRGB(36,36,40)
+        TabButton.BackgroundColor3 = Color3.fromRGB(50,50,60)
         TabButton.Size = UDim2.new(1, -8, 0, 34)
         TabButton.Text = name or "Tab"
         TabButton.TextColor3 = Color3.fromRGB(255,255,255)
@@ -223,12 +213,13 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         function Tab:Button(text, callback)
             local Btn = Instance.new("TextButton")
             Btn.Parent = Page
-            Btn.Size = UDim2.new(1, 0, 0, 40)
+            Btn.Size = UDim2.new(1, 0, 0, 42)
             Btn.BackgroundColor3 = Color3.fromRGB(70,130,180)
             Btn.Text = text or "Button"
             Btn.TextColor3 = Color3.fromRGB(255,255,255)
-            Btn.Font = Enum.Font.Gotham
+            Btn.Font = Enum.Font.GothamBold
             Btn.TextSize = 14
+            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,6)
             Btn.MouseButton1Click:Connect(function()
                 if callback then
                     pcall(callback)
@@ -240,14 +231,15 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         function Tab:Textbox(placeholder, clearOnFocus, callback)
             local Box = Instance.new("TextBox")
             Box.Parent = Page
-            Box.Size = UDim2.new(1, -10, 0, 40)
-            Box.BackgroundColor3 = Color3.fromRGB(50,50,60)
+            Box.Size = UDim2.new(1, -10, 0, 42)
+            Box.BackgroundColor3 = Color3.fromRGB(50,50,70)
             Box.PlaceholderText = placeholder or "Enter text"
             Box.Text = ""
             Box.TextColor3 = Color3.fromRGB(255,255,255)
             Box.Font = Enum.Font.Gotham
             Box.TextSize = 14
             Box.ClearTextOnFocus = clearOnFocus or false
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0,6)
             Box.FocusLost:Connect(function(enter)
                 if enter and callback then
                     pcall(callback, Box.Text)
