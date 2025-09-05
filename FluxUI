@@ -87,11 +87,16 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         Page.Size = UDim2.new(1,0,1,0)
         Page.BackgroundTransparency = 1
         Page.Visible = false
-        Page.ScrollBarThickness = 4
+        Page.ScrollBarThickness = 6
+        Page.ScrollBarImageColor3 = Color3.fromRGB(150,150,150)
 
         local UIList = Instance.new("UIListLayout", Page)
         UIList.Padding = UDim.new(0,5)
         UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+        UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Page.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 10)
+        end)
 
         Tab.Page = Page
 
@@ -111,7 +116,7 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         function Tab:Button(text, callback)
             local Btn = Instance.new("TextButton")
             Btn.Parent = Page
-            Btn.Size = UDim2.new(1,-10,0,30)
+            Btn.Size = UDim2.new(1, 0, 0, 35)
             Btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
             Btn.Text = text
             Btn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -126,7 +131,7 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         function Tab:Textbox(placeholder, clearOnFocus, callback)
             local Box = Instance.new("TextBox")
             Box.Parent = Page
-            Box.Size = UDim2.new(1,-10,0,30)
+            Box.Size = UDim2.new(1, -20, 0, 40)
             Box.BackgroundColor3 = Color3.fromRGB(40,40,40)
             Box.PlaceholderText = placeholder
             Box.Text = ""
@@ -143,6 +148,15 @@ function FluxUI:Window(title, subtitle, themeColor, toggleKey)
         end
 
         return setmetatable(Tab, Tab)
+    end
+
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    if isMobile then
+        MainFrame.Size = UDim2.new(0, 350, 0, 220)
+        MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
+        local UIScale = Instance.new("UIScale")
+        UIScale.Scale = 0.9
+        UIScale.Parent = MainFrame
     end
 
     if toggleKey then
